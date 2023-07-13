@@ -1,4 +1,5 @@
-function formatDate(date) {
+function formatDate(timestamp) {
+  let date = new Date(timestamp)
   let hours = date.getHours();
   if (hours < 10) {
     hours = `0${hours}`;
@@ -8,7 +9,6 @@ function formatDate(date) {
     minutes = `0${minutes}`;
   }
 
-  let dayToday = date.getDay();
   let days = [
     "Sunday",
     "Monday",
@@ -18,68 +18,81 @@ function formatDate(date) {
     "Friday",
     "Saturday",
   ];
-  let day = days[dayToday];
+  let day = days[day.getDay()];
 
   return `${day} ${hours}:${minutes}`;
 }
 
-function displayWeatherCondition(response) {
-  document.querySelector("#chosen-city").innerHTML = response.data.name;
-  document.querySelector("#temperature").innerHTML = Math.round(
-    response.data.main.temp
-  );
+function displayTemperature(response) {
+let temperatureElement = document.querySelector("#temperature");
+let cityElement = document.querySelector("#chosen-city");
+let descriptionElement = document.querySelector("#description");
+let windElement = document.querySelector("#wind");
+let humidityElement = document.querySelector("#humidity");
+let feels_likeElement = document.querySelector("#feels_like");
+let pressureElement = document.querySelector("#pressure");
+let dateElement = document.querySelector("#date");
+let iconElement = document.querySelector("#icon");
 
-  document.querySelector("#humidity").innerHTML = response.data.main.humidity;
-  document.querySelector("#wind").innerHTML = Math.round(
-    response.data.wind.speed
+let celsiusTemperature = response.data.main.temp;
+
+temperatureElement.innerHTML = Math.round(celsiusTemperature);
+  cityElement.innerHTML = response.data.name;
+  descriptionElement.innerHTML = response.data.weather[0].description;
+  windElement.innerHTML = Math.round(response.data.wind.speed * 3.6);
+  humidityElement.innerHTML = response.data.main.humidity;
+  feels_likeElement.innerHTML = response.data.main.feels_like;
+  pressureElement.innerHTML = response.data.main.pressure;
+  dateElement.innerHTML = formatDate(response.data.dt * 1000);
+  iconElement.setAttribute(
+    "src",
+    `http://openweathermap.org/img/wn/${response.data.weather[0].icon}@2x.png`
   );
-  document.querySelector("#description").innerHTML =
-    response.data.weather[0].main;
+  iconElement.setAttribute("alt", response.data.weather[0].description);
 }
+
 
 function searchCity(city) {
   let apiKey = "50fa4024e3b1d5eac2f51ab18a47e997";
   let apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
-  axios.get(apiUrl).then(displayWeatherCondition);
+  axios.get(apiUrl).then(displayTemperature);
 }
 
 function handleSubmit(event) {
   event.preventDefault();
-  let city = document.querySelector("#input-city").value;
-  searchCity(city);
-}
-function searchLocation(position) {
-  let apiKey = "50fa4024e3b1d5eac2f51ab18a47e997";
-  let apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${position.coords.latitude}&lon=${position.coords.longitude}&appid=${apiKey}&units=metric`;
-
-  axios.get(apiUrl).then(displayWeatherCondition);
+  let city = document.querySelector("#input-city");
+  searchCity(city.value);
 }
 
-function getCurrentLocation(event) {
-  event.preventDefault();
-  navigator.geolocation.getCurrentPosition(searchLocation);
-}
-
-function convertToFahrenheit(event) {
+function displayFahrenheitTemperature(event) {
   event.preventDefault();
   let temperatureElement = document.querySelector("#temperature");
-  temperatureElement.innerHTML = 80.6;
+
+  celsiusLink.classList.remove("active");
+  fahrenheitLink.classList.add("active");
+  let fahrenheitTemperature = (celsiusTemperature * 9) / 5 + 32;
+  temperatureElement.innerHTML = Math.round(fahrenheitTemperature);
 }
 
-function convertToCelsius(event) {
+function displayCelsiusTemperature(event) {
   event.preventDefault();
+  celsiusLink.classList.add("active");
+  fahrenheitLink.classList.remove("active");
   let temperatureElement = document.querySelector("#temperature");
-  temperatureElement.innerHTML = 27;
+  temperatureElement.innerHTML = Math.round(celsiusTemperature);
 }
 
-let dateDisplayed = document.querySelector("#date-today");
-let currentTime = new Date();
-dateDisplayed.innerHTML = formatDate(currentTime);
+let celsiusTemperature = null;
 
 let searchForm = document.querySelector("#search");
 searchForm.addEventListener("submit", handleSubmit);
 
-let currentLocationButton = document.querySelector("#current-location-button");
-currentLocationButton.addEventListener("click", getCurrentLocation);
+let fahrenheitLink = document.querySelector("#fahrenheit-link");
+fahrenheitLink.addEventListener("click", displayFahrenheitTemperature);
+
+let celsiusLink = document.querySelector("#celsius-link");
+celsiusLink.addEventListener("click", displayCelsiusTemperature);
+
+
 
 searchCity("Harare");
